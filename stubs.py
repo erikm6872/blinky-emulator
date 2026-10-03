@@ -167,6 +167,17 @@ class _Screen:
         return estimate_size(font_name, text)
 
     def text(self, text, x, y):
+        # The real device's bitmap fonts have some built-in leading our
+        # PIL-rendered approximation doesn't replicate - confirmed live:
+        # SkolDisplay draws "SKOL" at y=-3 and it renders fully visible on
+        # real hardware (the leading absorbs the negative offset), but
+        # this renderer was clipping it at row 0 since it draws ink flush
+        # to the requested position with no equivalent leading. Clamping
+        # negative y to 0 approximates that real-hardware behavior rather
+        # than literally clipping ink that wouldn't actually be clipped on
+        # the device.
+        y = max(int(y), 0)
+
         font_name = self.font.name if self.font else "smart"
         target_width, _ = estimate_size(font_name, text)
         pil_font = _fit_font(text, target_width)

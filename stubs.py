@@ -24,6 +24,7 @@ import time
 
 from PIL import Image, ImageDraw, ImageFont
 
+import panel_shape
 from font_metrics import estimate_size
 
 SCREEN_W = 39
@@ -96,8 +97,13 @@ class Device:
         if 0 <= x < SCREEN_W and 0 <= y < SCREEN_H:
             self.pixels[y][x] = max(0, min(255, int(brightness)))
 
-    def to_image(self, scale=12):
-        """Renders the framebuffer as an LED-dot-style PNG."""
+    def to_image(self, scale=12, show_dead_zones=True):
+        """Renders the framebuffer as an LED-dot-style PNG. The panel isn't
+        actually a clean rectangle - see panel_shape.py - so by default
+        this overlays the real device's button dead zones in red, since a
+        layout that looks fine here but runs through one of those regions
+        will look different on real hardware (confirmed live: this is
+        exactly what happened to SkolDisplay's default screen)."""
         img = Image.new("RGB", (SCREEN_W * scale, SCREEN_H * scale), (8, 8, 10))
         draw = ImageDraw.Draw(img)
         r = scale * 0.42
@@ -105,7 +111,10 @@ class Device:
             for x in range(SCREEN_W):
                 b = self.pixels[y][x]
                 cx, cy = x * scale + scale / 2, y * scale + scale / 2
-                color = (b, b, max(b - 20, 0))  # faint warm-white LED look
+                if show_dead_zones and panel_shape.is_dead_zone(x, y):
+                    color = (min(b + 60, 160), max(b - 30, 20), max(b - 30, 20))
+                else:
+                    color = (b, b, max(b - 20, 0))  # faint warm-white LED look
                 draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=color)
         return img
 

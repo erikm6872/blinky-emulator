@@ -21,6 +21,17 @@ browser. The page shows the 39×26 LED matrix (rendered as dots), clickable
 `Button A/B/C`, and an `Online/Offline` toggle to exercise both the
 connected and disconnected branches of your app's logic.
 
+**The panel isn't actually a rectangle.** Five physical buttons are
+embedded directly in the LED grid's footprint (confirmed live by
+photographing the badge fully lit — see `panel_shape.py`), and content
+drawn into those regions will look different on real hardware than it
+does here. Those dead zones are rendered in red by default
+(`Device.to_image(show_dead_zones=True)`, the default) specifically so a
+layout mistake like that gets caught in the emulator instead of only
+showing up on a hardware check-in — which is exactly how this was
+discovered in the first place (SkolDisplay's default screen ran "VIKINGS"
+straight through the bottom three buttons).
+
 `urequests.get()` is wired to the real `requests` library, so an app that
 fetches from a real HTTP endpoint can exercise the actual network path
 (not just a mock) while "online" — generally more useful than mocking,
